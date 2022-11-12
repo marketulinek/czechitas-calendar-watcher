@@ -10,48 +10,41 @@ HORIZONTAL_BORDER = '-' * TABLE_WIDTH
 
 
 def get_event_title(event):
-
     try:
         return event.find('a', {'class': 'event-title'}).get_text()
     except AttributeError as e:
         return '?'
 
 def get_event_city(event):
-
     try:
         return event.find('h2', {'class': 'm-sto'}).get_text()
     except AttributeError as e:
         return '?'
 
 def get_event_date(event):
-
     event_date = ''
-    date_tags = event.find_all('div', {'class': 'event-date-titlee'})
+    date_tags = event.find_all('div', {'class': 'event-date-title'})
     for date in date_tags:
         if not 'w-condition-invisible' in date.attrs['class']:
             event_date += date.get_text()
     return event_date.replace('a', ', ')
 
-def get_events(events_tag):
-
+def get_events(event_tags):
     events = []
-    for tag in events_tag:
-        event = {
+    for tag in event_tags:
+        events.append({
             'title': get_event_title(tag),
             'city': get_event_city(tag),
             'date': get_event_date(tag)
-        }
-        events.append(event)
+        })
     return events
 
 def get_next_page_url(content):
-
-    tag_next_page = content.find('a', {'aria-label': 'Next Page'})
-    if tag_next_page is None:
-            return None
-    
     try:
-        return TARGET_URL + tag_next_page.attrs['href']
+        return TARGET_URL + content.find('a', {'aria-label': 'Next Page'}).attrs['href']
+    except AttributeError as e:
+        # Next page does not exist.
+        return None
     except KeyError as e:
         # Attribute "href" of next page element was not found
         print('Nastala chyba při přechodu na další stránku.')
@@ -70,7 +63,7 @@ def show_data(events):
         print(f"|{''.center(TABLE_WIDTH-2)}|")
         print(f"|{'Nenalezeny žádné události :-('.center(TABLE_WIDTH-2)}|")
         print(f"|{''.center(TABLE_WIDTH-2)}|")
-    
+
     print(HORIZONTAL_BORDER)
 
 def watch():
@@ -78,7 +71,7 @@ def watch():
     url = TARGET_URL
     events = []
     page_number = 0
-    
+
     while url:
 
         page_number += 1
@@ -96,8 +89,8 @@ def watch():
         url = get_next_page_url(content)
 
         if page_number > 15:
-            print('Nalezeno velké množství stránek.')
-            print('Preventivně ukončuji WHILE cyklus, pro případ, že se jedná o nechtěné zacyklení.')
+            print('Nalezeno velké množství stránek.',
+                  'Preventivně ukončuji WHILE cyklus, pro případ, že se jedná o nechtěné zacyklení.')
             break
 
     show_data(events)
